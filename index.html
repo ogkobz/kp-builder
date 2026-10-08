@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{margin:0;font:14px/1.5 system-ui,sans-serif;background:#eef0f2}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Конструктор КП</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Две колонки: слева каталог, справа собираемое КП. На узком экране — одна. */
+:root {
+  --bg: #eef0f2;
+  --surface: #ffffff;
+  --surface-sunk: #f6f7f8;
+  --fg: #1b2227;
+  --fg-dim: #5e6a73;
+  --line: #d4d9dd;
+  --accent: #2b5d7d;
+  --accent-soft: #e4edf3;
+  --signal: #c98a00;
+  --signal-soft: #fdf3dc;
+  --stop: #a63232;
+  --stop-soft: #faeaea;
+  --ok: #2f6b45;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15191c;
+    --surface: #1e2429;
+    --surface-sunk: #191e22;
+    --fg: #e4e8eb;
+    --fg-dim: #9aa5ad;
+    --line: #313a41;
+    --accent: #6ea8cc;
+    --accent-soft: #223038;
+    --signal: #e0a92e;
+    --signal-soft: #322814;
+    --stop: #e07a7a;
+    --stop-soft: #331d1d;
+    --ok: #6fb98a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15191c;
+  --surface: #1e2429;
+  --surface-sunk: #191e22;
+  --fg: #e4e8eb;
+  --fg-dim: #9aa5ad;
+  --line: #313a41;
+  --accent: #6ea8cc;
+  --accent-soft: #223038;
+  --signal: #e0a92e;
+  --signal-soft: #322814;
+  --stop: #e07a7a;
+  --stop-soft: #331d1d;
+  --ok: #6fb98a;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--fg); font-family: var(--body); }
+* { box-sizing: border-box; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 56px; }
+
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px; border-bottom: 3px solid var(--fg); padding-bottom: 10px; margin-bottom: 4px; }
+h1 { font-family: var(--display); font-size: clamp(27px, 4vw, 38px); font-weight: 600; letter-spacing: .01em; margin: 0; text-transform: uppercase; }
+.sub { font-size: 12px; color: var(--fg-dim); letter-spacing: .07em; text-transform: uppercase; margin-left: auto; }
+.demo-note { font-size: 12px; color: var(--fg-dim); margin: 8px 0 20px; }
+
+.deal { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; background: var(--surface); border: 1px solid var(--line); padding: 10px 14px; margin-bottom: 18px; }
+.deal label { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--fg-dim); display: block; margin-bottom: 3px; }
+.deal input, .deal select { font-family: var(--body); font-size: 14px; padding: 5px 8px; border: 1px solid var(--line); background: var(--surface-sunk); color: var(--fg); min-width: 0; }
+.deal > div { min-width: 0; }
+
+.cols { display: grid; grid-template-columns: 370px 1fr; gap: 20px; align-items: start; }
+@media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+
+.panel { background: var(--surface); border: 1px solid var(--line); min-width: 0; }
+.panel > h2 { font-family: var(--display); text-transform: uppercase; font-size: 18px; letter-spacing: .04em; font-weight: 600; margin: 0; padding: 9px 14px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.panel > h2 span { font-family: var(--body); font-size: 11px; text-transform: none; letter-spacing: 0; color: var(--fg-dim); font-weight: 400; }
+.pad { padding: 14px; }
+
+#q { width: 100%; font-family: var(--body); font-size: 15px; padding: 9px 11px; border: 1px solid var(--line); background: var(--surface-sunk); color: var(--fg); }
+#q:focus-visible, .deal input:focus-visible, .deal select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.hint { font-size: 12px; color: var(--fg-dim); margin: 7px 0 0; }
+
+.found { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 1px; background: var(--line); max-height: 380px; overflow-y: auto; }
+.found:empty { display: none; }
+.found li { background: var(--surface); padding: 9px 11px; display: flex; gap: 10px; align-items: flex-start; }
+.found .art { font-family: var(--mono); font-size: 11px; color: var(--fg-dim); display: block; }
+.found .nm { font-size: 13px; line-height: 1.35; display: block; }
+.found .pr { margin-left: auto; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-size: 13px; }
+.found button { font-family: var(--body); font-size: 12px; font-weight: 500; border: 1px solid var(--accent); background: var(--accent-soft); color: var(--accent); padding: 4px 9px; cursor: pointer; align-self: center; white-space: nowrap; }
+.found button:hover { background: var(--accent); color: var(--surface); }
+
+.msg { padding: 11px 13px; font-size: 13px; line-height: 1.45; border-left: 3px solid; margin-top: 12px; }
+.msg.stop { background: var(--stop-soft); border-color: var(--stop); }
+.msg.plain { background: var(--surface-sunk); border-color: var(--line); color: var(--fg-dim); }
+.msg button { font-family: var(--body); font-size: 12px; margin-top: 7px; border: 1px solid currentColor; background: none; color: inherit; padding: 3px 8px; cursor: pointer; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th { font-family: var(--body); font-size: 10px; letter-spacing: .07em; text-transform: uppercase; color: var(--fg-dim); font-weight: 500; text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+tbody td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rowart { font-family: var(--mono); font-size: 11px; color: var(--fg-dim); display: block; }
+.rowname { line-height: 1.35; }
+.flags { margin-top: 2px; }
+.scroller { overflow-x: auto; }
+table input.wide { width: 100%; text-align: left; font-size: 12.5px; }
+table input { width: 54px; font-family: var(--body); font-size: 13px; padding: 3px 5px; border: 1px solid var(--line); background: var(--surface-sunk); color: var(--fg); text-align: right; font-variant-numeric: tabular-nums; }
+.kill { border: none; background: none; color: var(--fg-dim); font-size: 17px; line-height: 1; cursor: pointer; padding: 2px 4px; }
+.kill:hover { color: var(--stop); }
+
+.flag { display: inline-block; margin-top: 3px; font-size: 11px; line-height: 1.3; padding: 2px 6px; margin-top: 4px; margin-right: 4px; border-radius: 2px; }
+.flag.warn { background: var(--signal-soft); color: var(--signal); border: 1px solid var(--signal); }
+.flag.bad { background: var(--stop-soft); color: var(--stop); border: 1px solid var(--stop); }
+
+.empty { padding: 26px 14px; text-align: center; color: var(--fg-dim); font-size: 13px; line-height: 1.5; }
+
+.totals { border-top: 2px solid var(--fg); padding: 12px 14px; display: flex; flex-direction: column; gap: 5px; }
+.totals div { display: flex; justify-content: space-between; gap: 16px; font-size: 13px; font-variant-numeric: tabular-nums; }
+.totals .grand { font-family: var(--display); font-size: 23px; font-weight: 600; letter-spacing: .01em; padding-top: 5px; border-top: 1px solid var(--line); margin-top: 3px; }
+
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 0 14px 14px; }
+.go { font-family: var(--display); text-transform: uppercase; letter-spacing: .05em; font-size: 17px; font-weight: 600; background: var(--fg); color: var(--bg); border: none; padding: 9px 20px; cursor: pointer; }
+.go:hover { background: var(--accent); }
+.go:disabled { background: var(--line); color: var(--fg-dim); cursor: not-allowed; }
+.toggle { margin-left: auto; font-size: 12px; color: var(--fg-dim); display: flex; align-items: center; gap: 6px; cursor: pointer; }
+
+.doc { margin-top: 20px; background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--accent); }
+.doc .pad { padding: 20px; }
+.doc h3 { font-family: var(--display); text-transform: uppercase; font-size: 21px; margin: 0 0 3px; letter-spacing: .03em; }
+.doc .meta { font-size: 12px; color: var(--fg-dim); margin-bottom: 16px; }
+.doc table { font-size: 12px; }
+.doc .foot { margin-top: 14px; font-size: 12px; color: var(--fg-dim); line-height: 1.6; }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <h1>Конструктор КП</h1>
+  <div class="sub">АО «Индустриальные системы» · прототип</div>
+</header>
+<p class="demo-note">Прототип к тестовому заданию. Каталог и цены условные, 15 позиций. Данные никуда не отправляются.</p>
+
+<div class="deal">
+  <div>
+    <label for="client">Клиент</label>
+    <input id="client" value="ООО «Автодом», Казань">
+  </div>
+  <div>
+    <label for="dealno">Сделка</label>
+    <input id="dealno" value="Б24-4817" size="10">
+  </div>
+  <div>
+    <label for="vat">НДС</label>
+    <select id="vat">
+      <option value="20" selected>20% сверху</option>
+      <option value="0">без НДС</option>
+    </select>
+  </div>
+</div>
+
+<div class="cols">
+
+  <section class="panel">
+    <h2>Каталог <span id="catstate">15 позиций</span></h2>
+    <div class="pad">
+      <label for="q" style="display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--fg-dim);margin-bottom:5px">Артикул или название</label>
+      <input id="q" placeholder="ПД-2С-4000 или «подъёмник»" autocomplete="off" aria-describedby="qhint">
+      <p class="hint" id="qhint">Точный артикул даёт одну позицию, часть названия — список. «ё» и дефисы не важны.</p>
+      <ul class="found" id="found" aria-label="Найденные товары"></ul>
+      <div id="searchmsg" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Позиции КП <span id="cnt"></span></h2>
+    <div class="scroller">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th>Товар</th>
+            <th class="num">Цена</th>
+            <th class="num">Кол-во</th>
+            <th class="num">Скидка</th>
+            <th class="num">Сумма</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div id="emptybox"></div>
+    <div class="totals" id="totals"></div>
+    <div class="actions">
+      <button class="go" id="make">Сформировать КП</button>
+      <label class="toggle"><input type="checkbox" id="down"> каталог недоступен</label>
+    </div>
+  </section>
+
+</div>
+
+<div id="docbox"></div>
+
+</div>
+
+<script>
+// Условный каталог. Поля те же, что перечислены в разделе 4 постановки задачи.
+var TODAY = new Date(2026, 9, 8);
+var CATALOG = [
+  { art: "ПД-2С-4000", name: "Подъёмник двухстоечный электрогидравлический, 4 т", price: 268000, priced: "2026-09-28", off: false, spec: "г/п 4000 кг, высота подъёма 1900 мм, 380 В" },
+  { art: "ПД-4С-5000", name: "Подъёмник четырёхстоечный, 5 т", price: 412000, priced: "2026-09-28", off: false, spec: "г/п 5000 кг, длина платформы 4600 мм, 380 В" },
+  { art: "ПД-2С-3200", name: "Подъёмник двухстоечный, 3,2 т", price: 214000, priced: "2026-03-14", off: false, spec: "г/п 3200 кг, высота подъёма 1850 мм, 380 В" },
+  { art: "ШМ-650А", name: "Станок шиномонтажный полуавтомат", price: 142500, priced: "2026-10-01", off: false, spec: "диски 10–24\", давление 8–10 бар" },
+  { art: "ШМ-900П", name: "Станок шиномонтажный автомат для грузовых колёс", price: 489000, priced: "2026-09-19", off: false, spec: "диски 14–42\", вылет до 1600 мм" },
+  { art: "БС-200", name: "Станок балансировочный с автовводом", price: 118000, priced: "2026-10-02", off: false, spec: "диски 10–24\", точность 1 г, 220 В" },
+  { art: "БС-120", name: "Станок балансировочный базовый", price: 74000, priced: "2025-11-20", off: true, spec: "диски 10–20\", точность 5 г, 220 В" },
+  { art: "КМ-500-10", name: "Компрессор поршневой, ресивер 500 л", price: 196000, priced: "2026-09-30", off: false, spec: "10 бар, 1400 л/мин, 380 В" },
+  { art: "КМ-270-10", name: "Компрессор поршневой, ресивер 270 л", price: 97500, priced: "2026-09-30", off: false, spec: "10 бар, 690 л/мин, 380 В" },
+  { art: "РС-3D-PRO", name: "Стенд развал-схождение 3D", price: null, priced: "", off: false, spec: "4 камеры, подъём до 2000 мм, ПК в комплекте" },
+  { art: "ДП-3000", name: "Домкрат подкатной гидравлический, 3 т", price: 18400, priced: "2026-10-03", off: false, spec: "г/п 3000 кг, подхват 95 мм, подъём до 500 мм" },
+  { art: "ТГ-2000", name: "Траверса гидравлическая, 2 т", price: 31700, priced: "2026-09-25", off: false, spec: "г/п 2000 кг, под двухстоечный подъёмник" },
+  { art: "ГВ-П-680", name: "Гайковёрт пневматический ударный", price: 9800, priced: "2026-10-03", off: false, spec: "680 Н·м, 1/2\", 6,3 бар" },
+  { art: "УЗК-200", name: "Установка для заправки кондиционеров автоматическая", price: 287000, priced: "2026-08-11", off: false, spec: "R134a, бак 12 кг, точность 10 г" },
+  { art: "МРУ-60", name: "Установка маслораздаточная пневматическая", price: 42300, priced: "2026-09-22", off: false, spec: "бочка 60 л, расход 8 л/мин" }
+];
+
+// Условные значения — настоящие спрашиваю у руководителя (вопросы 2, 3, 5).
+var STALE_DAYS = 30;      // с какого возраста цена считается давней
+var MAX_QTY = 100000;     // верхняя граница количества, чтобы опечатка не дала миллиарды
+var cart = [
+  { art: "ПД-2С-4000", qty: 1, disc: 0 },
+  { art: "ТГ-2000", qty: 1, disc: 0 },
+  { art: "ШМ-650А", qty: 2, disc: 5 }
+];
+
+var $ = function (id) { return document.getElementById(id); };
+var money = function (n) { return n.toLocaleString("ru-RU") + " ₽"; };
+// «ё» приводим к «е», а дефис и пробел считаем одним разделителем: менеджер
+// набирает с обычной раскладки и не ставит «ё», а артикул ему диктуют по телефону.
+var norm = function (s) {
+  return String(s).trim().toLowerCase()
+    .replace(/ё/g, "е")
+    .replace(/[\s\-–—_]+/g, " ");
+};
+
+function daysSince(iso) {
+  if (!iso) return null;
+  var p = iso.split("-");
+  var d = new Date(+p[0], +p[1] - 1, +p[2]);
+  return Math.round((TODAY - d) / 86400000);
+}
+// Позиции, внесённые вручную, живут отдельно и в каталог не возвращаются:
+// иначе они попадут в результаты поиска наравне с настоящими.
+var MANUAL = [];
+
+function byArt(a) {
+  for (var i = 0; i < CATALOG.length; i++) if (CATALOG[i].art === a) return CATALOG[i];
+  for (var j = 0; j < MANUAL.length; j++) if (MANUAL[j].art === a) return MANUAL[j];
+  return null;
+}
+
+// Один источник пометок для таблицы и для документа: иначе готовое КП
+// расходится с экраном, а обещание «пойдёт в КП с пометкой» оказывается ложным.
+function flagList(it) {
+  var f = [];
+  if (it.off) f.push({ t: "снят с продажи", c: "bad" });
+  if (!it.price) f.push({ t: "уточнить цену", c: "bad" });
+  if (it.manual) f.push({ t: "нет в каталоге", c: "warn" });
+  var ds = daysSince(it.priced);
+  if (ds !== null && ds > STALE_DAYS) f.push({ t: "цена от " + ru(it.priced), c: "warn" });
+  return f;
+}
+
+// Поиск: точный артикул — одна позиция, иначе совпадение по части артикула или названия.
+function search(raw) {
+  var q = norm(raw);
+  if (!q) return [];
+  for (var i = 0; i < CATALOG.length; i++) {
+    if (norm(CATALOG[i].art) === q) return [CATALOG[i]];
+  }
+  return CATALOG.filter(function (it) {
+    return norm(it.art).indexOf(q) > -1 || norm(it.name).indexOf(q) > -1;
+  });
+}
+
+function renderSearch() {
+  var box = $("found"), msg = $("searchmsg"), raw = $("q").value;
+  box.innerHTML = "";
+  msg.innerHTML = "";
+
+  if ($("down").checked) {
+    msg.innerHTML = '<div class="msg stop"><strong>Каталог не отвечает.</strong> Это не значит, что товаров нет — ' +
+      'пока связи нет, позицию можно внести вручную, она пойдёт в КП с пометкой.' +
+      '<br><button type="button" id="manual">Внести вручную</button></div>';
+    $("manual").onclick = addManual;
+    return;
+  }
+  if (!norm(raw)) return;
+
+  var hits = search(raw);
+  if (!hits.length) {
+    msg.innerHTML = '<div class="msg plain">В каталоге ничего не найдено по запросу «' + esc(raw) + '».' +
+      '<br><button type="button" id="manual">Внести вручную</button></div>';
+    $("manual").onclick = addManual;
+    return;
+  }
+  hits.forEach(function (it) {
+    var li = document.createElement("li");
+    var left = document.createElement("div");
+    left.style.minWidth = "0";
+    left.innerHTML = '<span class="art">' + esc(it.art) + '</span><span class="nm">' + esc(it.name) + '</span>';
+    var pr = document.createElement("div");
+    pr.className = "pr";
+    pr.textContent = it.price ? money(it.price) : "цена не указана";
+    var b = document.createElement("button");
+    b.type = "button";
+    b.textContent = "В КП";
+    b.onclick = function () { add(it.art); };
+    li.appendChild(left); li.appendChild(pr); li.appendChild(b);
+    box.appendChild(li);
+  });
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
+// Любое изменение позиций делает уже отрисованный документ недействительным:
+// иначе на экране два разных итога, и менеджер отправит тот, что выглядит документом.
+function invalidateDoc() {
+  var box = $("docbox");
+  if (!box.innerHTML || box.dataset.stale === "1") return;
+  box.dataset.stale = "1";
+  box.innerHTML = '<div class="msg plain" role="status">Позиции изменились — документ устарел. ' +
+    'Нажмите «Сформировать КП» заново.</div>';
+}
+
+// Дубликат увеличивает количество, вторая строка не появляется.
+function add(art) {
+  for (var i = 0; i < cart.length; i++) {
+    if (cart[i].art === art) { cart[i].qty += 1; draw(); return; }
+  }
+  cart.push({ art: art, qty: 1, disc: 0 });
+  draw();
+}
+var manualN = 0;
+function addManual() {
+  var typed = $("q").value.trim();
+  // Повторный клик по той же кнопке не должен плодить вторую строку.
+  for (var i = 0; i < MANUAL.length; i++) {
+    if (typed && MANUAL[i].name === typed) {
+      add(MANUAL[i].art);
+      $("q").value = "";
+      renderSearch();
+      return;
+    }
+  }
+  manualN++;
+  var art = "ВРУЧНУЮ-" + manualN;
+  MANUAL.push({ art: art, name: typed || "Позиция вне каталога", price: null, priced: "", off: false, spec: "", manual: true });
+  cart.push({ art: art, qty: 1, disc: 0 });
+  $("q").value = "";
+  renderSearch();   // снимаем сообщение «ничего не найдено» вместе с его кнопкой
+  draw();
+}
+
+function lineSum(row) {
+  var it = byArt(row.art);
+  if (!it || !it.price) return 0;
+  return Math.round(it.price * row.qty * (1 - row.disc / 100));
+}
+
+var sumCells = [];
+
+function draw() {
+  var tb = $("rows");
+  tb.innerHTML = "";
+  sumCells = [];
+
+  cart.forEach(function (row, idx) {
+    var it = byArt(row.art);
+    var tr = document.createElement("tr");
+
+    var tdN = document.createElement("td");
+    var flags = flagList(it).map(function (f) {
+      return '<span class="flag ' + f.c + '">' + esc(f.t) + "</span>";
+    }).join("");
+    tdN.innerHTML = '<span class="rowart">' + esc(it.art) + "</span>";
+    if (it.manual) {
+      var inm = document.createElement("input");
+      inm.type = "text"; inm.className = "wide"; inm.value = it.name;
+      inm.setAttribute("aria-label", "Название позиции, введённой вручную");
+      inm.oninput = function () { it.name = inm.value; };
+      tdN.appendChild(inm);
+    } else {
+      var sp = document.createElement("span");
+      sp.className = "rowname"; sp.textContent = it.name;
+      tdN.appendChild(sp);
+    }
+    if (flags) tdN.insertAdjacentHTML("beforeend", '<div class="flags">' + flags + "</div>");
+
+    var tdP = document.createElement("td");
+    tdP.className = "num";
+    if (it.price) {
+      tdP.textContent = money(it.price);
+    } else {
+      var ip = document.createElement("input");
+      ip.type = "number"; ip.min = "0"; ip.step = "1"; ip.placeholder = "цена";
+      ip.setAttribute("aria-label", "Цена вручную, " + it.name);
+      ip.oninput = function () {
+        var v = parseInt(ip.value, 10);
+        it.price = (isNaN(v) || v <= 0) ? null : v;
+        recalc();
+      };
+      ip.onblur = function () { if (it.price) draw(); };
+      tdP.appendChild(ip);
+    }
+
+    var tdQ = document.createElement("td");
+    tdQ.className = "num";
+    var iq = document.createElement("input");
+    iq.type = "number"; iq.min = "1"; iq.max = String(MAX_QTY); iq.step = "1";
+    iq.value = row.qty;
+    iq.setAttribute("aria-label", "Количество, " + it.name);
+    // Пересчитываем, но не перестраиваем таблицу: иначе поле теряет фокус
+    // после первой же цифры и число больше 9 ввести невозможно.
+    iq.oninput = function () {
+      var raw = iq.value.trim();
+      if (raw === "") { recalc(); return; }   // поле чистят под новый ввод — ждём
+      var v = parseInt(raw, 10);
+      if (isNaN(v) || v < 1) v = 1;
+      if (v > MAX_QTY) v = MAX_QTY;
+      if (String(v) !== raw) iq.value = v;    // поле и сумма не должны расходиться
+      row.qty = v;
+      recalc();
+    };
+    iq.onblur = function () { iq.value = row.qty; };
+    tdQ.appendChild(iq);
+
+    var tdD = document.createElement("td");
+    tdD.className = "num";
+    var id_ = document.createElement("input");
+    id_.type = "number"; id_.min = "0"; id_.max = "100"; id_.step = "1";
+    id_.value = row.disc;
+    id_.setAttribute("aria-label", "Скидка в процентах, " + it.name);
+    id_.oninput = function () {
+      var raw = id_.value.trim();
+      if (raw === "") { recalc(); return; }
+      var v = parseInt(raw, 10);
+      if (isNaN(v)) v = 0;
+      v = Math.min(100, Math.max(0, v));
+      if (String(v) !== raw) id_.value = v;
+      row.disc = v;
+      recalc();
+    };
+    id_.onblur = function () { id_.value = row.disc; };
+    tdD.appendChild(id_);
+
+    var tdS = document.createElement("td");
+    tdS.className = "num";
+    tdS.textContent = it.price ? money(lineSum(row)) : "—";
+    sumCells[idx] = tdS;
+
+    var tdX = document.createElement("td");
+    tdX.className = "num";
+    var x = document.createElement("button");
+    x.className = "kill"; x.type = "button"; x.innerHTML = "&times;";
+    x.title = "Убрать позицию";
+    x.setAttribute("aria-label", "Убрать " + it.name);
+    x.onclick = function () {
+      cart.splice(idx, 1);
+      draw();
+      // После перерисовки фокус упал бы на body — возвращаем его на соседнюю строку,
+      // иначе удалить несколько позиций с клавиатуры невозможно.
+      var k = $("rows").querySelectorAll(".kill");
+      if (k.length) k[Math.min(idx, k.length - 1)].focus(); else $("q").focus();
+    };
+    tdX.appendChild(x);
+
+    [tdN, tdP, tdQ, tdD, tdS, tdX].forEach(function (td) { tr.appendChild(td); });
+    tb.appendChild(tr);
+  });
+
+  $("emptybox").innerHTML = cart.length ? "" :
+    '<div class="empty">В КП пока ничего нет.<br>Найдите товар в каталоге слева и нажмите «В КП».</div>';
+  $("cnt").textContent = cart.length ? cart.length + " поз." : "";
+  recalc();
+}
+
+// Обновляет только суммы и итоги — строки таблицы остаются на месте.
+function recalc() {
+  cart.forEach(function (row, idx) {
+    var it = byArt(row.art);
+    if (sumCells[idx]) sumCells[idx].textContent = it && it.price ? money(lineSum(row)) : "—";
+  });
+
+  var net = 0, nopr = 0, units = 0;
+  cart.forEach(function (r) {
+    var it = byArt(r.art);
+    units += r.qty;
+    if (it.price) net += lineSum(r); else nopr++;
+  });
+  var vat = +$("vat").value;
+  var tax = Math.round(net * vat / 100);
+
+  var t = $("totals");
+  t.innerHTML = "";
+  if (cart.length) {
+    // Наименования и единицы — разные числа; показываем оба, чтобы
+    // «3 позиции» не прочитали как три единицы оборудования.
+    addRow(t, "Наименований", String(cart.length));
+    addRow(t, "Единиц товара", String(units));
+    addRow(t, "Сумма без НДС", money(net));
+    if (vat) addRow(t, "НДС " + vat + "%", money(tax));
+    var g = document.createElement("div");
+    g.className = "grand";
+    g.innerHTML = "<span>Итого</span><span>" + money(net + tax) + "</span>";
+    t.appendChild(g);
+    if (nopr) {
+      var w = document.createElement("div");
+      w.style.cssText = "color:var(--stop);font-size:12px;padding-top:4px";
+      w.innerHTML = "<span>Без цены: " + nopr + " поз. — в итог не вошли</span>";
+      t.appendChild(w);
+    }
+  }
+  $("make").disabled = !cart.length;
+  $("catstate").textContent = $("down").checked ? "недоступен" : CATALOG.length + " позиций";
+  invalidateDoc();
+}
+
+function addRow(parent, a, b) {
+  var d = document.createElement("div");
+  d.innerHTML = "<span>" + a + "</span><span>" + b + "</span>";
+  parent.appendChild(d);
+}
+function ru(iso) {
+  if (!iso) return "—";
+  var p = iso.split("-");
+  return p[2] + "." + p[1] + "." + p[0];
+}
+
+$("make").onclick = function () {
+  var net = 0;
+  $("docbox").dataset.stale = "";
+  var trs = cart.map(function (r) {
+    var it = byArt(r.art);
+    if (it.price) net += lineSum(r);
+    var fl = flagList(it).map(function (f) { return f.t; });
+    return "<tr><td><span class='rowart'>" + esc(it.art) + "</span>" + esc(it.name) +
+      (it.spec ? "<br><span style='color:var(--fg-dim);font-size:11px'>" + esc(it.spec) + "</span>" : "") +
+      (fl.length ? "<br><span style='color:var(--signal);font-size:11px'>! " + esc(fl.join(" · ")) + "</span>" : "") +
+      "</td><td class='num'>" + (it.price ? money(it.price) : "по запросу") +
+      "</td><td class='num'>" + r.qty +
+      "</td><td class='num'>" + (r.disc ? r.disc + "%" : "—") +
+      "</td><td class='num'>" + (it.price ? money(lineSum(r)) : "по запросу") + "</td></tr>";
+  }).join("");
+  var vat = +$("vat").value, tax = Math.round(net * vat / 100);
+  var d = new Date(TODAY);
+  $("docbox").innerHTML =
+    '<div class="doc"><div class="pad">' +
+    "<h3>Коммерческое предложение</h3>" +
+    '<div class="meta">' + esc($("client").value) + " · сделка " + esc($("dealno").value) +
+    " · от " + String(d.getDate()).padStart(2, "0") + "." + String(d.getMonth() + 1).padStart(2, "0") + "." + d.getFullYear() + "</div>" +
+    '<div class="scroller"><table><thead><tr><th>Наименование</th><th class="num">Цена</th><th class="num">Кол-во</th><th class="num">Скидка</th><th class="num">Сумма</th></tr></thead><tbody>' +
+    trs + "</tbody></table></div>" +
+    '<div class="totals" style="padding-inline:0">' +
+    "<div><span>Сумма без НДС</span><span>" + money(net) + "</span></div>" +
+    (vat ? "<div><span>НДС " + vat + "%</span><span>" + money(tax) + "</span></div>" : "") +
+    '<div class="grand"><span>Итого</span><span>' + money(net + tax) + "</span></div></div>" +
+    '<div class="foot">Позиции с пометкой «по запросу» требуют уточнения цены.<br>' +
+    "Так выглядит документ до выгрузки в шаблон компании — формат шаблона уточняется (вопрос 5).<br>" +
+    "Порядок НДС, срок действия предложения и порог «давняя цена» (здесь 30 дней) взяты условно: " +
+    "это вопросы руководителю, а не наше решение.</div>" +
+    '<button class="go" id="copy" style="margin-top:12px">Скопировать текст КП</button>' +
+    '<span id="copied" class="hint" style="margin-left:10px"></span>' +
+    "</div></div>";
+  $("copy").onclick = function () {
+    var lines = cart.map(function (r) {
+      var it = byArt(r.art);
+      var fl = flagList(it).map(function (f) { return f.t; });
+      return [it.art, it.name, (it.price ? it.price : "по запросу"), r.qty,
+              (r.disc ? r.disc + "%" : ""), (it.price ? lineSum(r) : ""),
+              (fl.length ? "! " + fl.join(" · ") : "")].join("\t");
+    });
+    var head = "КП для " + $("client").value + ", сделка " + $("dealno").value;
+    var txt = head + "\n\n" + lines.join("\n") + "\n\nИтого: " + money(net + tax);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function () {
+        $("copied").textContent = "скопировано";
+      }, function () { $("copied").textContent = "не вышло — выделите таблицу мышью"; });
+    } else {
+      $("copied").textContent = "буфер недоступен — выделите таблицу мышью";
+    }
+  };
+  $("docbox").scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+$("q").addEventListener("input", renderSearch);
+$("down").addEventListener("change", function () { renderSearch(); draw(); });
+$("vat").addEventListener("change", draw);
+draw();
+</script>
+
+</html>
